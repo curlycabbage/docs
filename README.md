@@ -35,13 +35,12 @@ to eliminate unused code from the final bundle.
 ### Creating a simple Indexer with a Search function
 
 ```ts
-import { createIndex } from "ndx";
-import { addDocumentToIndex } from "ndx-index";
+import { createIndex, addDocumentToIndex } from "ndx";
 import { query } from "ndx-query";
-import { trimNonWordCharactersFilter, lowerCaseFilter, whitespaceTokenizer } from "ndx-utils";
+import { words } from "lodash";
 
 function termFilter(term) {
-  return trimNonWordCharactersFilter(lowerCaseFilter(term));
+  return term.toLowerCase();
 }
 
 function createDocumentIndex(fields) {
@@ -62,15 +61,16 @@ function createDocumentIndex(fields) {
         fieldAccessors,
         // Tokenizer is a function that breaks text into words, phrases, symbols, or other meaningful elements
         // called tokens.
-        // `whitespaceTokenizer()` breaks words on spaces, tabs, line feeds and assumes that contiguous nonwhitespace
-        // characters form a single token.
-        whitespaceTokenizer,
+        // Lodash function `words()` splits string into an array of its words, see https://lodash.com/docs/#words for
+        // details.
+        words,
         // Filter is a function that processes tokens and returns terms, terms are used in Inverted Index to
         // index documents.
         termFilter,
-        // Document ID
+        // Document key, it can be a unique document id or a refernce to a document if you want to store all documents
+        // in memory.
         doc.id,
-        // Document
+        // Document.
         doc,
       );
     },
@@ -110,13 +110,13 @@ docs.forEach((d) => { index.add(d); });
 
 // Perform a search query.
 index.search("Lorem");
-// => [{ docId: "2" , score: ... }, { docId: "1", score: ... } ]
+// => [{ key: "2" , score: ... }, { key: "1", score: ... } ]
 //
 // document with an id `"2"` is ranked higher because it has a `"content"` field with a less number of terms than
 // document with an id `"1"`.
 
 index.search("dolor");
-// => [{ docId: "1", score: ... }]
+// => [{ key: "1", score: ... }]
 ```
 
 ### Removing Documents from the Index
@@ -170,7 +170,7 @@ const docs = [
 const index = createDocumentIndex([{ name: "content" }]);
 docs.forEach((d) => { index.add(d); });
 
-// Remove document with "1" id.
+// Remove document with id "1".
 index.remove("1");
 ```
 
