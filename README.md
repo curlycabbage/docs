@@ -122,13 +122,12 @@ index.search("dolor");
 ### Removing Documents from the Index
 
 ```ts
-import { createIndex } from "ndx";
-import { addDocumentToIndex, removeDocumentFromIndex, vacuumIndex } from "ndx-index";
+import { createIndex, addDocumentToIndex, removeDocumentFromIndex, vacuumIndex } from "ndx";
 import { query } from "ndx-query";
-import { trimNonWordCharactersFilter, lowerCaseFilter, whitespaceTokenizer } from "ndx-utils";
+import { words } from "lodash";
 
 function termFilter(term) {
-  return trimNonWordCharactersFilter(lowerCaseFilter(term));
+  return term.toLowerCase();
 }
 
 function createDocumentIndex(fields) {
@@ -140,7 +139,7 @@ function createDocumentIndex(fields) {
   
   return {
     add: (doc) => {
-      addDocumentToIndex(index, fieldAccessors, whitespaceTokenizer, termFilter, doc.id, doc);
+      addDocumentToIndex(index, fieldAccessors, words, termFilter, doc.id, doc);
     },
     // `remove()` function will remove document from the index.
     remove: (id) => {
