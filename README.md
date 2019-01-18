@@ -1,6 +1,6 @@
 # [ndx](https://github.com/ndx-search/ndx) &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ndx-search/ndx/blob/master/LICENSE) [![npm version](https://img.shields.io/npm/v/ndx.svg)](https://www.npmjs.com/package/ndx) [![codecov](https://codecov.io/gh/ndx-search/ndx/branch/master/graph/badge.svg)](https://codecov.io/gh/ndx-search/ndx) [![CircleCI Status](https://circleci.com/gh/ndx-search/ndx.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/ndx-search/ndx) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ndx-search/ndx)
 
-ndx is a collection of javascript (TypeScript) libraries for lightweight full-text indexing and searching.
+`ndx` is a collection of javascript (TypeScript) libraries for lightweight full-text indexing and searching.
 
 ## Live Demo
 
@@ -32,7 +32,23 @@ To check out docs for a legacy API `<1.0.0`, visit [ndx-compat](https://github.c
 There are no high-level API that was available in `<1.0.0`. Everything is implemented as basic composable functions
 to eliminate unused code from the final bundle.
 
-### Creating a simple Indexer with a Search function
+### Quick Start
+
+Install packages:
+
+```sh
+$ npm install --save ndx ndx-query
+```
+
+[ndx](https://github.com/ndx-search/ndx) package contains core data structures and functions that are used to mutate
+this data structures.
+
+[ndx-query](https://github.com/ndx-search/ndx-query) package contains a simple search query implementation that uses
+[BM25](https://en.wikipedia.org/wiki/Okapi_BM25) ranking function to rank matching documents.
+
+Each package has commonjs and es2015 modules.
+
+#### Creating a simple Indexer with a Search function
 
 ```ts
 import { createIndex, addDocumentToIndex } from "ndx";
@@ -119,7 +135,7 @@ index.search("dolor");
 // => [{ key: "1", score: ... }]
 ```
 
-### Removing Documents from the Index
+#### Removing Documents from the Index
 
 ```ts
 import { createIndex, addDocumentToIndex, removeDocumentFromIndex, vacuumIndex } from "ndx";
@@ -173,7 +189,26 @@ docs.forEach((d) => { index.add(d); });
 index.remove("1");
 ```
 
-### Serializing Index
+### Tokenizers and Filters
+
+`ndx` library doesn't contain any tokenizers or filters. There are other libraries that implement tokenizers, for
+example [Natural](https://github.com/NaturalNode/natural/) has a good collection of tokenizers and stemmers,
+[stopword](https://github.com/fergiemcdowall/stopword) library can be used to filter stop words.
+
+### Index Serialization
+
+In some use cases it can be useful to serialize index. There are two simple functions that convert `Index` data
+structure to serializable object and from serializable object:
+
+```ts
+function toSerializable<T extends SerializableDocumentKey>(index: Index<T>): SerializableIndex<T>;
+function fromSerializable<T extends SerializableDocumentKey>(index: SerializableIndex<T>): Index<T>;
+```
+
+This functions are only working with indexes that are using serializable keys when indexing documents:
+`string` or `number`.
+
+#### Example
 
 ```ts
 import { createIndex } from "ndx";
@@ -217,7 +252,7 @@ data structure. Inverted index keys contain terms, keys are indexed by term `cha
 of documents and term frequencies for each separate field. There is always a root node that has `charCode === 0` to
 simplify all algorithms that traverse through this trie.
 
-`fieldDetails` contains additional information about each indexed field.
+`fields` contains additional information about each indexed field.
 
 #### `DocumentDetails`
 
@@ -231,7 +266,7 @@ export interface DocumentDetails<T> {
 `key` is a document key that were used to index a document. Document key type can be a unique document ID, or a direct
 reference to a document.
 
-`fieldLengths` contains number of terms that were indexed in each field.
+`fieldLengths` contains a number of terms that were indexed in each field.
 
 #### `FieldDetails`
 
