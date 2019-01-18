@@ -192,6 +192,102 @@ const data = JSON.stringify(serializable);
 const index2 = fromSerializable(JSON.parse(data));
 ```
 
+### Data Structures
+
+#### `Index`
+
+`Index` data structure is a part of a public API, there won't be any future changes to this data structure. It can be
+used to create custom search query algorithms instead of the one that is implemented in the `ndx-query` package.
+
+```ts
+export interface Index<T> {
+  readonly docs: Map<T, DocumentDetails<T>>;
+  readonly root: InvertedIndexNode<T>;
+  readonly fields: FieldDetails[];
+}
+```
+
+Almost all interfaces in the `ndx` package are using parametric type `T` to specify document key type. Document key type
+can be a unique document ID, or a direct reference to a document.
+
+`docs` contains a hash map that indexes `DocumentDetails` by document key.
+
+`root` is a root node for inverted index. Inverted index implemented as a [trie](https://en.wikipedia.org/wiki/Trie)
+data structure. Inverted index keys contain terms, keys are indexed by term `charCode`. Each trie node contains a list
+of documents and term frequencies for each separate field. There is always a root node that has `charCode === 0` to
+simplify all algorithms that traverse through this trie.
+
+`fieldDetails` contains additional information about each indexed field.
+
+#### `DocumentDetails`
+
+```ts
+export interface DocumentDetails<T> {
+  readonly key: T;
+  readonly fieldLengths: number[];
+}
+```
+
+`key` is a document key that were used to index a document. Document key type can be a unique document ID, or a direct
+reference to a document.
+
+`fieldLengths` contains number of terms that were indexed in each field.
+
+#### `FieldDetails`
+
+`FieldDetails` contains additional information about each indexed field.
+
+```ts
+export interface FieldDetails {
+  sum: number;
+  avg: number;
+}
+```
+
+`sum` is a sum of all terms that were indexed for this field.
+
+`avg` is a an average number of terms per document for this field.
+
+#### `InvertedIndexNode`
+
+`InvertedIndexNode` is an inverted index [trie](https://en.wikipedia.org/wiki/Trie) node.
+
+```ts
+export interface InvertedIndexNode<T> {
+  readonly charCode: number;
+  next: InvertedIndexNode<T> | null;
+  firstChild: InvertedIndexNode<T> | null;
+  firstDoc: DocumentPointer<T> | null;
+}
+```
+
+`charCode` stores indexed char codes for terms.
+
+`next` is a reference to the next sibling node. Children lists are implemented as an intrusive singular linked lists.
+
+`firstChild` is a reference to first children node in an intrusive singular linked list.
+
+`firstDoc` is a reference to first document that contains a term associated with the current key. It is also implemented
+as an intrusive singular linked list.
+
+#### `DocumentPointer`
+
+`DocumentPointer` contains term frequency for each indexed document.
+
+```ts
+export interface DocumentPointer<T> {
+  next: DocumentPointer<T> | null;
+  readonly details: DocumentDetails<T>;
+  readonly termFrequency: number[];
+}
+```
+
+`next` is a reference to the next sibling node. Document lists are implemented as an intrusive singular linked lists.
+
+`details` is a reference to the `DocumentDetails` object that contains all details about current document.
+
+`termFrequency` is a term frequency for each separate field.
+
 ## License
 
 [MIT](http://opensource.org/licenses/MIT)
